@@ -4,7 +4,7 @@ import openai
 
 openai.api_key = openaikey
 
-bot = Bot(token="5955921956:AAHpuwmFnBod141O0bGD7w2KU0yzGQg8720")
+bot = Bot(token=transalortoken)
 dp = Dispatcher(bot)
 
 
