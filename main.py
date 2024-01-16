@@ -7,7 +7,7 @@ import sqlite3
 
 
 openai.api_key = openaikey
-syscontent = "Отвечай всегда с юмором"  # Глобальная переменная для системного контента
+syscontent = ""  # Глобальная переменная для системного контента
 
 user_history = {}
 syscontent_list = []
@@ -61,12 +61,13 @@ def chat_with_model(message, user_id):
     message_history.append({"role": "user", "content": message})
     messages = [
         {"role": "system", "content": "Ты - красивый бот с именем Инна"},
-        {"role": "system", "content": "Тебя создал Анатолий Филиппов, ты ласково называешь его папочкой"},
+        # {"role": "system", "content": "Ты - врач, и твоя задача задавать мне вопросы"},
+        #            {"role": "system", "content": "Ты должен задавать мне вопросы чтобы установить диагноз"},
         {"role": "system", "content": syscontent}
     ] + message_history
     print(messages)
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-1106",
         messages=messages
     )
 
@@ -118,10 +119,35 @@ async def echo(message: types.Message):
     await message.answer(response)
 
 
+@dp.message_handler()
+async def handle_message(message: types.Message):
+    user_id = message.from_user.id
+    response = chat_with_model(message.text, user_id)
+    await message.reply(response)
 
+# Обработчик новых пользователей в группе
+@dp.message_handler(content_types=['new_chat_members'])
+async def welcome_new_member(message: types.Message):
+    # Проверяем, не является ли бот добавленным пользователем
+    if message.from_user.id != bot.id:
+        # Отправка приветственного сообщения
+        greeting = f"Добро пожаловать в группу, {message.from_user.first_name}!"
+        await message.reply(greeting)
 
+# Обработчик упоминания бота в общем чате
+@dp.message_handler(content_types=['text'])
+async def reply_to_mention(message: types.Message):
+    # Проверяем, наличие упоминания бота в тексте сообщения
+    if bot.get_me().username in message.text:
+        # Отправка ответного сообщения
+        reply_message = f"Вы упомянули меня, {message.from_user.first_name}!"
+        await message.reply(reply_message)
+
+# Запуск бота
 if __name__ == '__main__':
+    from aiogram import executor
     executor.start_polling(dp, skip_updates=True)
+
 
 
 conn.close()
